@@ -40,6 +40,9 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     if key_size is None:
         key_size = '1024'
 
+    if shell is None:
+        shell = 'bash'
+
     verify_create_directory(enode, cert_dir, shell)
     cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
              ' + key_size
@@ -61,7 +64,7 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     print(result_gencsr)
 
 
-def verify_create_directory(enode, cert_dir=None, shell='bash'):
+def verify_create_directory(enode, cert_dir=None, shell=None):
 
     # Verify directory is not empty, if it is set /etc/ssl/certs/ as direcotry
     if cert_dir is None:
