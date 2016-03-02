@@ -27,15 +27,28 @@ from pytest import set_trace
 
 
 def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
-                     state=None, city=None, company=None, section=None,
-                     name=None, email=None, password=None,
-                     optional_company=None, shell=None):
+                     state=None, location=None, organization=None,
+                     organization_unit=None, name=None, shell=None):
     """
     If the cert and key already existis remove it, and generate a new one
     into the directory
     """
     # cert_file = "server.crt"
     key_file = "server-private.key"
+    subj = '/'
+
+    if country is not None:
+        subj += 'C=' + country + '/'
+    if state is not None:
+        subj += 'ST=' + state + '/'
+    if location is not None:
+        subj += 'L=' + location + '/'
+    if organization is not None:
+        subj += 'O=' + organization + '/'
+    if organization_unit is not None:
+        subj += 'OU=' + organization_unit + '/'
+    if name is not None:
+        subj += 'CN=' + name + '/'
 
     if key_size is None:
         key_size = '1024'
@@ -58,7 +71,8 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
 
     # RM server pass key
 
-    cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr'
+    cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr \
+' + subj
     set_trace()
     result_gencsr = enode(cmd_gencsr, shell=shell)
     print(result_gencsr)
