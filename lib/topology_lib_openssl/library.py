@@ -38,7 +38,7 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     key_file = "server-private.key"
 
     if key_size is None:
-        key_size = 1024
+        key_size = '1024'
 
     verify_create_directory(enode, cert_dir, shell)
     cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
