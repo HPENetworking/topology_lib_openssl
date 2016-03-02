@@ -21,16 +21,68 @@ topology_lib_openssl communication library implementation.
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
+from pytest import set_trace
 
 # Add your library functions here.
 
 
-def your_function_here():
+def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
+                     state=None, city=None, company=None, section=None,
+                     name=None, email=None, password=None,
+                     optional_company=None, shell=None):
     """
-    Document your function here.
+    If the cert and key already existis remove it, and generate a new one
+    into the directory
     """
-    pass
+    # cert_file = "server.crt"
+    key_file = "server-private.key"
+
+    if key_size is None:
+        key_size = 1024
+
+    verify_create_directory(enode, cert_dir, shell)
+    cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
+             ' + key_size
+    result_genrsa = enode(cmd_genrsa, shell=shell)
+    if '...............+++' not in str(result_genrsa):
+        print("error")
+
+    cmd_genkey = 'openssl rsa -passin pass:x -in server.pass.key -out\
+             ' + key_file
+    result_genkey = enode(cmd_genkey, shell=shell)
+    if 'writing RSA key' not in str(result_genkey):
+        print('Error')
+
+    # RM server pass key
+
+    cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr'
+    set_trace()
+    result_gencsr = enode(cmd_gencsr, shell=shell)
+    print(result_gencsr)
+
+
+def verify_create_directory(enode, cert_dir=None, shell='bash'):
+
+    # Verify directory is not empty, if it is set /etc/ssl/certs/ as direcotry
+    if cert_dir is None:
+        cert_dir = '/etc/ssl/certs/'
+
+    # check if directory exists
+    cmd_cd = 'cd ' + cert_dir
+    file_exists = enode(cmd_cd, shell=shell)
+    if 'No such file or directory' in str(file_exists):
+        # creates the file
+        cmd_mkdir = 'mkdir ' + cert_dir
+        enode(cmd_mkdir, shell=shell)
+        enode(cmd_cd, shell=shell)
+    cmd_pwd = 'pwd'
+    result_current_directory = enode(cmd_pwd, shell=shell)
+    if cert_dir not in str(result_current_directory):
+        # return there is a problem with the diectory
+        print("error")
+
 
 __all__ = [
-    'your_function_here'
+    'verify_create_directory',
+    'generate_rsa_key'
 ]
