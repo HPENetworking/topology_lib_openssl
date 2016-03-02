@@ -43,7 +43,7 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     if shell is None:
         shell = 'bash'
 
-    verify_create_directory(enode, cert_dir, shell)
+#    verify_create_directory(enode, cert_dir, shell)
     cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
              ' + key_size
     result_genrsa = enode(cmd_genrsa, shell=shell)
@@ -72,12 +72,14 @@ def verify_create_directory(enode, cert_dir=None, shell=None):
 
     # check if directory exists
     cmd_cd = 'cd ' + cert_dir
+    set_trace()
     file_exists = enode(cmd_cd, shell=shell)
     if 'No such file or directory' in str(file_exists):
         # creates the file
         cmd_mkdir = 'mkdir ' + cert_dir
         enode(cmd_mkdir, shell=shell)
         enode(cmd_cd, shell=shell)
+
     cmd_pwd = 'pwd'
     result_current_directory = enode(cmd_pwd, shell=shell)
     if cert_dir not in str(result_current_directory):
