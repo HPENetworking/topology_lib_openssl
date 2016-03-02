@@ -33,9 +33,9 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     If the cert and key already existis remove it, and generate a new one
     into the directory
     """
-    # cert_file = "server.crt"
+    cert_file = "server.crt"
     key_file = "server-private.key"
-    subj = '/'
+    subj = '"/"'
 
     if country is not None:
         subj += 'C=' + country + '/'
@@ -57,28 +57,40 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
         shell = 'bash'
 
 #    verify_create_directory(enode, cert_dir, shell)
+
+    # Generate server.pass.key
     cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
              ' + key_size
     result_genrsa = enode(cmd_genrsa, shell=shell)
-    if '...............+++' not in str(result_genrsa):
-        print("error")
+    assert '...............+++' in str(result_genrsa), 'The server.pass.key \
+            is not generated as expected'
 
+    # Generate server-private.key
     cmd_genkey = 'openssl rsa -passin pass:x -in server.pass.key -out\
              ' + key_file
     result_genkey = enode(cmd_genkey, shell=shell)
-    if 'writing RSA key' not in str(result_genkey):
-        print('Error')
+    assert 'writing RSA key' in str(result_genkey), 'The server-private-key \
+            is not generated as expected'
 
-    # RM server pass key
+    # Generate server.csr
+    cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr\
+ -subj ' + subj
+    # result_gencsr = enode(cmd_gencsr, shell=shell)
+    enode(cmd_gencsr, shell=shell)
 
-    cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr \
-' + subj
-    set_trace()
-    result_gencsr = enode(cmd_gencsr, shell=shell)
-    print(result_gencsr)
+    cmd_ls = 'ls'
+    result_ls = enode(cmd_ls, shell=shell)
+    assert key_file in result_ls, key_file + 'is expected to exist'
+
+    # Generate server.crt
+    cmd_gencrt = 'openssl x509 -req -days 365 -in server.csr -signkey\
+ ' + key_file + ' -out ' + cert_file
+    result_gencrt = enode(cmd_gencrt, shell=shell)
+    assert 'Signature ok' in result_gencrt, cert_file + ' is not generated as \
+            expected'
 
 
-def verify_create_directory(enode, cert_dir=None, shell=None):
+def copy_expected_directory(enode, cert_dir=None, shell=None):
 
     # Verify directory is not empty, if it is set /etc/ssl/certs/ as direcotry
     if cert_dir is None:
@@ -102,6 +114,5 @@ def verify_create_directory(enode, cert_dir=None, shell=None):
 
 
 __all__ = [
-    'verify_create_directory',
     'generate_rsa_key'
 ]
