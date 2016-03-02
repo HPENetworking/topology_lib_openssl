@@ -63,14 +63,14 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
              ' + key_size
     result_genrsa = enode(cmd_genrsa, shell=shell)
     set_trace()
-    # assert '...............+++' not in str(result_genrsa), 'The \
-    #        server.pass.key is not generated as expected'
+    assert 'Generating RSA private key' in str(result_genrsa), 'The \
+           server.pass.key is not generated as expected'
 
     # Generate server-private.key
     cmd_genkey = 'openssl rsa -passin pass:x -in server.pass.key -out\
              ' + key_file
     result_genkey = enode(cmd_genkey, shell=shell)
-    assert 'writing RSA key' not in str(result_genkey), 'The \
+    assert 'writing RSA key' in str(result_genkey), 'The \
             server-private-key is not generated as expected'
 
     # Generate server.csr
@@ -81,13 +81,13 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
 
     cmd_ls = 'ls'
     result_ls = enode(cmd_ls, shell=shell)
-    assert key_file not in result_ls, key_file + 'is expected to exist'
+    assert key_file in result_ls, key_file + 'is expected to exist'
 
     # Generate server.crt
     cmd_gencrt = 'openssl x509 -req -days 365 -in server.csr -signkey\
  ' + key_file + ' -out ' + cert_file
     result_gencrt = enode(cmd_gencrt, shell=shell)
-    assert 'Signature ok'not in result_gencrt, cert_file + ' is not generated \
+    assert 'Signature ok' in result_gencrt, cert_file + ' is not generated \
             as expected'
 
 
