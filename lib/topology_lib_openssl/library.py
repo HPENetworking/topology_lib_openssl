@@ -28,13 +28,58 @@ from pytest import set_trace
 
 def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
                      state=None, location=None, organization=None,
-                     organization_unit=None, name=None, shell=None):
+                     organization_unit=None, name=None, shell=None,
+                     cert_file=None, key_file=None):
     """
-    If the cert and key already existis remove it, and generate a new one
+    If the cert and key already existis rewrite it, and generate a new one
     into the directory
     """
-    cert_file = "server.crt"
-    key_file = "server-private.key"
+    if cert_file is None:
+        cert_file = "server.crt"
+
+    if key_file is None:
+        key_file = "server-private.key"
+
+    if shell is None:
+        shell = 'bash'
+
+    generate_key_pass(enode, shell, key_size)
+    generate_key(enode, shell, key_file)
+    generate_csr(enode, shell, key_file, country, state, location,
+                 organization, organization_unit, name)
+    generate_crt(enode, shell, key_file, cert_file)
+    move_directory(enode, cert_dir, shell)
+
+
+def generate_key_pass(enode, shell, key_size=None):
+
+    if key_size is None:
+        key_size = '1024'
+
+    # Generate server.pass.key
+    cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
+             ' + key_size
+    result_genrsa = enode(cmd_genrsa, shell=shell)
+
+    assert 'Generating RSA private key' in str(result_genrsa), 'The \
+           server.pass.key is not generated as expected'
+
+
+def generate_key(enode, shell, key_file):
+
+    # Generate server-private.key
+    cmd_genkey = 'openssl rsa -passin pass:x -in server.pass.key -out\
+             ' + key_file
+    result_genkey = enode(cmd_genkey, shell=shell)
+
+    assert 'writing RSA key' in str(result_genkey), 'The \
+            server-private-key is not generated as expected'
+
+
+def generate_csr(enode, shell, key_file, country=None,
+                 state=None, location=None, organization=None,
+                 organization_unit=None, name=None):
+
     subj = '"/"'
 
     if country is not None:
@@ -50,29 +95,6 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     if name is not None:
         subj += 'CN=' + name + '/'
 
-    if key_size is None:
-        key_size = '1024'
-
-    if shell is None:
-        shell = 'bash'
-
-#    verify_create_directory(enode, cert_dir, shell)
-
-    # Generate server.pass.key
-    cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
-             ' + key_size
-    result_genrsa = enode(cmd_genrsa, shell=shell)
-    set_trace()
-    assert 'Generating RSA private key' in str(result_genrsa), 'The \
-           server.pass.key is not generated as expected'
-
-    # Generate server-private.key
-    cmd_genkey = 'openssl rsa -passin pass:x -in server.pass.key -out\
-             ' + key_file
-    result_genkey = enode(cmd_genkey, shell=shell)
-    assert 'writing RSA key' in str(result_genkey), 'The \
-            server-private-key is not generated as expected'
-
     # Generate server.csr
     cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr\
  -subj ' + subj
@@ -83,6 +105,9 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
     result_ls = enode(cmd_ls, shell=shell)
     assert key_file in result_ls, key_file + 'is expected to exist'
 
+
+def generate_crt(enode, shell, key_file, cert_file):
+
     # Generate server.crt
     cmd_gencrt = 'openssl x509 -req -days 365 -in server.csr -signkey\
  ' + key_file + ' -out ' + cert_file
@@ -91,27 +116,27 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
             as expected'
 
 
-def copy_expected_directory(enode, cert_dir=None, shell=None):
+def move_directory(enode, cert_dir=None, shell=None, *files):
 
     # Verify directory is not empty, if it is set /etc/ssl/certs/ as direcotry
     if cert_dir is None:
         cert_dir = '/etc/ssl/certs/'
 
     # check if directory exists
-    cmd_cd = 'cd ' + cert_dir
-    set_trace()
-    file_exists = enode(cmd_cd, shell=shell)
+    cmd_ls = 'ls ' + cert_dir
+    file_exists = enode(cmd_ls, shell)
     if 'No such file or directory' in str(file_exists):
         # creates the file
         cmd_mkdir = 'mkdir ' + cert_dir
-        enode(cmd_mkdir, shell=shell)
-        enode(cmd_cd, shell=shell)
+        result_mkdir = enode(cmd_mkdir, shell=shell)
+        set_trace()
+        assert '' in result_mkdir, 'unable to create directoty ' + cert_dir
 
-    cmd_pwd = 'pwd'
-    result_current_directory = enode(cmd_pwd, shell=shell)
-    if cert_dir not in str(result_current_directory):
-        # return there is a problem with the diectory
-        print("error")
+    for file in files:
+        cmd_mv = 'mv ' + file + ' ' + cert_dir
+        result_mv = enode(cmd_mv, shell)
+        assert '' in result_mv, 'unable to move the file ' + file
+        + ' to ' + cert_dir
 
 
 __all__ = [
