@@ -127,7 +127,6 @@ def move_directory(enode, files=[], cert_dir=None, shell=None):
     for file in files:
         cmd_mv = 'mv ' + file + ' ' + cert_dir
         result_mv = enode(cmd_mv, shell)
-        set_trace()
         assert '' in result_mv, 'unable to move the file ' + file
         + ' to ' + cert_dir
 
