@@ -26,10 +26,10 @@ from pytest import set_trace
 # Add your library functions here.
 
 
-def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
-                     state=None, location=None, organization=None,
-                     organization_unit=None, name=None, shell=None,
-                     cert_file=None, key_file=None):
+def generate_rsa_key(enode, switch_ip, cert_dir=None, key_size=None,
+                     country='CR', state='HE', location='Heredia',
+                     organization='HPE', organization_unit='Aruba',
+                     name=None, shell=None, cert_file=None, key_file=None):
     """
     If the cert and key already existis rewrite it, and generate a new one
     into the directory
@@ -45,7 +45,7 @@ def generate_rsa_key(enode, cert_dir=None, key_size=None, country=None,
 
     generate_key_pass(enode, shell, key_size)
     generate_key(enode, shell, key_file)
-    generate_csr(enode, shell, key_file, country, state, location,
+    generate_csr(enode, switch_ip, shell, key_file, country, state, location,
                  organization, organization_unit, name)
     generate_crt(enode, shell, key_file, cert_file)
     move_directory(enode, cert_dir, shell)
@@ -76,24 +76,16 @@ def generate_key(enode, shell, key_file):
             server-private-key is not generated as expected'
 
 
-def generate_csr(enode, shell, key_file, country=None,
+def generate_csr(enode, switch_ip, shell, key_file, country=None,
                  state=None, location=None, organization=None,
                  organization_unit=None, name=None):
 
-    subj = '"/"'
+    if name is None:
+        name = switch_ip
 
-    if country is not None:
-        subj += 'C=' + country + '/'
-    if state is not None:
-        subj += 'ST=' + state + '/'
-    if location is not None:
-        subj += 'L=' + location + '/'
-    if organization is not None:
-        subj += 'O=' + organization + '/'
-    if organization_unit is not None:
-        subj += 'OU=' + organization_unit + '/'
-    if name is not None:
-        subj += 'CN=' + name + '/'
+    subj = '"/"C=' + country + '"/"ST=' + state + '"/"L=' + location + '"/"O='\
+                   + organization + '"/"OU=' + organization_unit + '"/"CN='\
+                   + name + '/'
 
     # Generate server.csr
     cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr\
