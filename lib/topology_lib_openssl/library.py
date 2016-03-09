@@ -48,7 +48,7 @@ def generate_rsa_key(enode, switch_ip, cert_dir=None, key_size=None,
     generate_csr(enode, switch_ip, shell, key_file, country, state, location,
                  organization, organization_unit, name)
     generate_crt(enode, shell, key_file, cert_file)
-    move_directory(enode, cert_dir, shell)
+    move_directory(enode, cert_dir, shell, files=[cert_file, key_file])
 
 
 def generate_key_pass(enode, shell, key_size=None):
