@@ -83,29 +83,30 @@ def generate_csr(enode, switch_ip, shell, key_file, country=None,
     if name is None:
         name = switch_ip
 
-    subj = '"/"C=' + country + '"/"ST=' + state + '"/"L=' + location + '"/"O='\
-                   + organization + '"/"OU=' + organization_unit + '"/"CN='\
-                   + name + '/'
+    subj = '"/"C={}"/"ST={}"/"L={}"/"O={}"/"OU={}"/"CN={}\
+'.format(country, state, location, organization, organization_unit, name)
 
     # Generate server.csr
-    cmd_gencsr = 'openssl req -new -key ' + key_file + ' -out server.csr\
- -subj ' + subj
+    cmd_gencsr = 'openssl req -new -key {} -out server.csr\
+ -subj {}'.format(key_file, subj)
+
     # result_gencsr = enode(cmd_gencsr, shell=shell)
     enode(cmd_gencsr, shell=shell)
 
-    cmd_ls = 'ls'
+    cmd_ls = 'ls {}'.format(key_file)
     result_ls = enode(cmd_ls, shell=shell)
-    assert key_file in result_ls, key_file + 'is expected to exist'
+    assert 'No such file or directory' not in result_ls, \
+        '{} is expected to exist'.format(key_file)
 
 
 def generate_crt(enode, shell, key_file, cert_file):
 
     # Generate server.crt
-    cmd_gencrt = 'openssl x509 -req -days 365 -in server.csr -signkey\
- ' + key_file + ' -out ' + cert_file
+    cmd_gencrt = 'openssl x509 -req -days 365 -in server.csr -signkey \
+{} -out {}'.format(key_file, cert_file)
     result_gencrt = enode(cmd_gencrt, shell=shell)
-    assert 'Signature ok' in result_gencrt, cert_file + ' is not generated \
-            as expected'
+    assert 'Signature ok' in result_gencrt, \
+        '{} is not generated as expected'.format(cert_file)
 
 
 def move_directory(enode, files=[], cert_dir=None, shell=None):
@@ -115,20 +116,20 @@ def move_directory(enode, files=[], cert_dir=None, shell=None):
         cert_dir = '/etc/ssl/certs/'
 
     # check if directory exists
-    cmd_ls = 'ls ' + cert_dir
+    cmd_ls = 'sh {}'.format(cert_dir)
     file_exists = enode(cmd_ls, shell)
-    if 'No such file or directory' in str(file_exists):
+    if 'Can\'t open' in str(file_exists):
         # creates the file
-        cmd_mkdir = 'mkdir ' + cert_dir
+        cmd_mkdir = 'mkdir {}'.format(cert_dir)
         result_mkdir = enode(cmd_mkdir, shell=shell)
         set_trace()
-        assert '' in result_mkdir, 'unable to create directoty ' + cert_dir
+        assert '' in result_mkdir, 'Unable to create directoty ' + cert_dir
 
     for file in files:
-        cmd_mv = 'mv ' + file + ' ' + cert_dir
+        cmd_mv = 'mv {} {}'.format(file, cert_dir)
         result_mv = enode(cmd_mv, shell)
-        assert '' in result_mv, 'unable to move the file ' + file \
-        + ' to ' + cert_dir
+        assert '' in result_mv, \
+            'Unable to move the file {} to {}'.format(file, cert_dir)
 
 
 __all__ = [
