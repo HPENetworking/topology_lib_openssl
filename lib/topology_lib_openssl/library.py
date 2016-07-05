@@ -26,7 +26,8 @@ from pytest import set_trace
 # Add your library functions here.
 
 
-def generate_rsa_key(enode, switch_ip, cert_dir=None, key_size=None,
+def generate_rsa_key(enode, switch_ip, cert_directory='/etc/ssl/certs/',
+                     key_directory='/etc/ssl/private/', key_size=None,
                      country='CR', state='HE', location='Heredia',
                      organization='HPE', organization_unit='Aruba',
                      name=None, shell=None, cert_file=None, key_file=None):
@@ -48,7 +49,8 @@ def generate_rsa_key(enode, switch_ip, cert_dir=None, key_size=None,
     generate_csr(enode, switch_ip, shell, key_file, country, state, location,
                  organization, organization_unit, name)
     generate_crt(enode, shell, key_file, cert_file)
-    move_directory(enode, [cert_file, key_file], cert_dir, shell)
+    move_directory(enode, [cert_file, key_file],
+                   [cert_directory, key_directory], shell)
 
 
 def generate_key_pass(enode, shell, key_size=None):
@@ -109,27 +111,24 @@ def generate_crt(enode, shell, key_file, cert_file):
         '{} is not generated as expected'.format(cert_file)
 
 
-def move_directory(enode, files=[], cert_dir=None, shell=None):
+def move_directory(enode, files, directories, shell=None):
 
-    # Verify directory is not empty, if it is set /etc/ssl/certs/ as direcotry
-    if cert_dir is None:
-        cert_dir = '/etc/ssl/certs/'
+    for file, directory in zip(files, directories):
+        # check if directory exists
+        cmd_ls = 'sh {}'.format(directory)
+        file_exists = enode(cmd_ls, shell)
+        if 'Can\'t open' in str(file_exists):
+            # creates the file
+            cmd_mkdir = 'mkdir {}'.format(directory)
+            result_mkdir = enode(cmd_mkdir, shell=shell)
+            set_trace()
+            assert '' in result_mkdir, '\
+                    Unable to create directoty ' + directory
 
-    # check if directory exists
-    cmd_ls = 'sh {}'.format(cert_dir)
-    file_exists = enode(cmd_ls, shell)
-    if 'Can\'t open' in str(file_exists):
-        # creates the file
-        cmd_mkdir = 'mkdir {}'.format(cert_dir)
-        result_mkdir = enode(cmd_mkdir, shell=shell)
-        set_trace()
-        assert '' in result_mkdir, 'Unable to create directoty ' + cert_dir
-
-    for file in files:
-        cmd_mv = 'mv {} {}'.format(file, cert_dir)
+        cmd_mv = 'mv {} {}'.format(file, directory)
         result_mv = enode(cmd_mv, shell)
         assert '' in result_mv, \
-            'Unable to move the file {} to {}'.format(file, cert_dir)
+            'Unable to move the file {} to {}'.format(file, directory)
 
 
 __all__ = [
