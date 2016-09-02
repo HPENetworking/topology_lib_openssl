@@ -21,7 +21,6 @@ topology_lib_openssl communication library implementation.
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
-from pytest import set_trace
 
 # Add your library functions here.
 
@@ -59,23 +58,23 @@ def generate_key_pass(enode, shell, key_size=None):
         key_size = '1024'
 
     # Generate server.pass.key
-    cmd_genrsa = 'openssl genrsa -des3 -passout pass:x -out server.pass.key\
-             ' + key_size
+    cmd_genrsa = ('openssl genrsa -des3 -passout pass:x -out server.pass.key '
+                  '' + key_size)
     result_genrsa = enode(cmd_genrsa, shell=shell)
 
-    assert 'Generating RSA private key' in str(result_genrsa), 'The \
-           server.pass.key is not generated as expected'
+    assert 'Generating RSA private key' in str(result_genrsa), \
+        'The server.pass.key is not generated as expected'
 
 
 def generate_key(enode, shell, key_file):
 
     # Generate server-private.key
-    cmd_genkey = 'openssl rsa -passin pass:x -in server.pass.key -out\
-             ' + key_file
+    cmd_genkey = ('openssl rsa -passin pass:x -in server.pass.key -out ' +
+                  key_file)
     result_genkey = enode(cmd_genkey, shell=shell)
 
-    assert 'writing RSA key' in str(result_genkey), 'The \
-            server-private-key is not generated as expected'
+    assert 'writing RSA key' in str(result_genkey), \
+        'The server-private-key is not generated as expected'
 
 
 def generate_csr(enode, switch_ip, shell, key_file, country=None,
@@ -85,12 +84,12 @@ def generate_csr(enode, switch_ip, shell, key_file, country=None,
     if name is None:
         name = switch_ip
 
-    subj = '"/"C={}"/"ST={}"/"L={}"/"O={}"/"OU={}"/"CN={}\
-'.format(country, state, location, organization, organization_unit, name)
+    subj = '"/"C={}"/"ST={}"/"L={}"/"O={}"/"OU={}"/"CN={}'.format(
+        country, state, location, organization, organization_unit, name)
 
     # Generate server.csr
-    cmd_gencsr = 'openssl req -new -key {} -out server.csr\
- -subj {}'.format(key_file, subj)
+    cmd_gencsr = 'openssl req -new -key {} -out server.csr -subj {}'.format(
+        key_file, subj)
 
     # result_gencsr = enode(cmd_gencsr, shell=shell)
     enode(cmd_gencsr, shell=shell)
@@ -104,8 +103,8 @@ def generate_csr(enode, switch_ip, shell, key_file, country=None,
 def generate_crt(enode, shell, key_file, cert_file):
 
     # Generate server.crt
-    cmd_gencrt = 'openssl x509 -req -days 365 -in server.csr -signkey \
-{} -out {}'.format(key_file, cert_file)
+    cmd_gencrt = ('openssl x509 -req -days 365 -in server.csr -signkey {} '
+                  '-out {}').format(key_file, cert_file)
     result_gencrt = enode(cmd_gencrt, shell=shell)
     assert 'Signature ok' in result_gencrt, \
         '{} is not generated as expected'.format(cert_file)
@@ -115,19 +114,18 @@ def move_directory(enode, files, directories, shell=None):
 
     for file, directory in zip(files, directories):
         # check if directory exists
-        cmd_ls = 'sh {}'.format(directory)
+        cmd_ls = 'ls {}'.format(directory)
         file_exists = enode(cmd_ls, shell)
-        if 'Can\'t open' in str(file_exists):
+        if 'No such file or directory' in str(file_exists):
             # creates the file
             cmd_mkdir = 'mkdir {}'.format(directory)
             result_mkdir = enode(cmd_mkdir, shell=shell)
-            set_trace()
-            assert '' in result_mkdir, '\
-                    Unable to create directoty ' + directory
+            assert '' == result_mkdir, \
+                'Unable to create directoty ' + directory
 
         cmd_mv = 'mv {} {}'.format(file, directory)
         result_mv = enode(cmd_mv, shell)
-        assert '' in result_mv, \
+        assert '' == result_mv, \
             'Unable to move the file {} to {}'.format(file, directory)
 
 
