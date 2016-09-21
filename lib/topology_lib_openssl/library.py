@@ -114,9 +114,9 @@ def move_directory(enode, files, directories, shell=None):
 
     for file, directory in zip(files, directories):
         # check if directory exists
-        cmd_ls = 'ls {}'.format(directory)
-        file_exists = enode(cmd_ls, shell)
-        if 'No such file or directory' in str(file_exists):
+        dir_exists = '[ -d {} ] && echo yes'.format(directory)
+        file_exists = enode(dir_exists, shell)
+        if file_exists != 'yes':
             # creates the file
             cmd_mkdir = 'mkdir {}'.format(directory)
             result_mkdir = enode(cmd_mkdir, shell=shell)
